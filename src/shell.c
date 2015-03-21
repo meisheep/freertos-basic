@@ -24,6 +24,7 @@ void help_command(int, char **);
 void host_command(int, char **);
 void mmtest_command(int, char **);
 void test_command(int, char **);
+void new_command(int, char **);
 void _command(int, char **);
 
 #define MKCL(n, d) {.name=#n, .fptr=n ## _command, .desc=d}
@@ -37,6 +38,7 @@ cmdlist cl[]={
 	MKCL(mmtest, "heap memory allocation test"),
 	MKCL(help, "help"),
 	MKCL(test, "test new function"),
+	MKCL(new, "new a task"),
 	MKCL(, ""),
 };
 
@@ -186,7 +188,31 @@ void test_command(int n, char *argv[]) {
     	}
     } else {
     	fio_printf(1, "Usage:\r\n");
-    	fio_printf(1, "test -f <number>	@ figure out the fibonacci number of the input parameter\r\n");
+    	fio_printf(1, "test -f <number>	-- figure out the fibonacci number of the input parameter\r\n");
+    }
+}
+
+void fatcat_task(void *pvParameters) {
+	while(1);
+}
+
+void new_command(int n, char *argv[]) {
+    fio_printf(1, "\r\n");
+
+    if(n == 2) {
+    	char *task_name = argv[1];
+
+    	if(xTaskCreate(fatcat_task,
+	        	(signed portCHAR *) task_name,
+	        	512 /* stack size */, NULL, tskIDLE_PRIORITY + 1, NULL)!=-1) {
+        	fio_printf(1, "Successfully create a new task: %s'\r\n", task_name);
+        } else {
+			fio_printf(2, "Error: cannot create a new task\r\n");
+		}
+
+    } else {
+    	fio_printf(1, "Usage:\r\n");
+    	fio_printf(1, "new <task_name>	-- new a task doing nothing with <task_name>\r\n");
     }
 }
 
