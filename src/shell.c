@@ -161,29 +161,33 @@ void help_command(int n,char *argv[]){
 }
 
 void test_command(int n, char *argv[]) {
-    int handle;
-    int error;
-
     fio_printf(1, "\r\n");
-    
-    handle = host_action(SYS_SYSTEM, "mkdir -p output");
-    handle = host_action(SYS_SYSTEM, "touch output/syslog");
 
-    handle = host_action(SYS_OPEN, "output/syslog", 8);
-    if(handle == -1) {
-        fio_printf(1, "Open file error!\n\r");
-        return;
+    if(n > 2) {
+    	if(strcmp(argv[1], "-f") == 0) {
+    		int num = 0;
+    		int num_len = strlen(argv[2]);
+
+    		for(int i = 0; i < num_len; i++)
+    			num = num * 10 + (argv[2][i] - '0');
+
+			int previous = -1;
+			int result = 1;
+			int sum = 0;
+
+			for(int i = 0; i <= num; i++)
+			{
+				sum = result + previous;
+				previous = result;
+				result = sum;		
+			}
+
+			fio_printf(1, "The fibonacci number of %d is %d\r\n", num, result);
+    	}
+    } else {
+    	fio_printf(1, "Usage:\r\n");
+    	fio_printf(1, "test -f <number>	@ figure out the fibonacci number of the input parameter\r\n");
     }
-
-    char *buffer = "Test host_write function which can write data to output/syslog\n";
-    error = host_action(SYS_WRITE, handle, (void *)buffer, strlen(buffer));
-    if(error != 0) {
-        fio_printf(1, "Write file error! Remain %d bytes didn't write in the file.\n\r", error);
-        host_action(SYS_CLOSE, handle);
-        return;
-    }
-
-    host_action(SYS_CLOSE, handle);
 }
 
 void _command(int n, char *argv[]){
