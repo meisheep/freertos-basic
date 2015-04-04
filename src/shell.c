@@ -193,7 +193,32 @@ void test_command(int n, char *argv[]) {
 }
 
 void fatcat_task(void *pvParameters) {
-	while(1);
+	int handle;
+	int error;
+	while(1) {
+		handle = host_action(SYS_SYSTEM, "touch sysinfo");
+
+	    handle = host_action(SYS_OPEN, "sysinfo", 8);
+		if(handle == -1) {
+		    fio_printf(1, "Open file error!\n\r");
+	        return;
+		}
+
+		char output[1024] = "\n\rName          State   Priority  Stack  Num\n\r*******************************************\n\r";
+		signed char buf[1024-strlen(output)+2];
+		vTaskList(buf);
+		strcat(output, (char*) buf + 2);
+	    error = host_action(SYS_WRITE, handle, (void *)output, strlen(output));
+	    if(error != 0) {
+	        fio_printf(1, "Write file error! Remain %d bytes didn't write in the file.\n\r", error);
+	        host_action(SYS_CLOSE, handle);
+	        return;
+	    }
+
+	    host_action(SYS_CLOSE, handle);
+
+	    vTaskDelay(1000);
+	}
 }
 
 void new_command(int n, char *argv[]) {
@@ -204,7 +229,7 @@ void new_command(int n, char *argv[]) {
 
     	if(xTaskCreate(fatcat_task,
 	        	(signed portCHAR *) task_name,
-	        	512 /* stack size */, NULL, tskIDLE_PRIORITY + 1, NULL)!=-1) {
+	        	1024 /* stack size */, NULL, tskIDLE_PRIORITY + 1, NULL)!=-1) {
         	fio_printf(1, "Successfully create a new task: %s'\r\n", task_name);
         } else {
 			fio_printf(2, "Error: cannot create a new task\r\n");
